@@ -5,12 +5,31 @@ import urllib.request
 import json
 import random
 from termcolor import colored
+from forex_python.converter import CurrencyRates
+
+# --- edit these lines with your own info ---
+usd_mode = True # set to True to use $ instead of £
+api_key = '' # api key for getting news from newsdata.io
+closes_all = {'BTC': 17227.63,  # average buy prices
+              'ETH': 1278,
+              'LTC': 70.10,
+              'DOGE': 0.06819}
+held = {'BTC': 0.01201,  # amount of each crypto held
+        'ETH': 0.03747,
+        'LTC': 0.4624,
+        'DOGE': 320.91}
+# --- ---
+
+c = CurrencyRates()
+
+USD_GBP_RATE = c.get_rate('USD', 'GBP')
+#print(USD_GBP_RATE)
+GBP_USD_RATE = c.get_rate('GBP', 'USD')
 
 def get_headlines():
     titles = []
     coins = ['bitcoin','litecoin','ethereum','dogecoin']
     for coin in coins:
-        api_key = ''
         if api_key == '': return ["None"]
         url = "https://newsdata.io/api/1/news?apikey=" + api_key + "&q=" + coin + "&language=en"
         page = urllib.request.urlopen(url)
@@ -37,17 +56,13 @@ def get_headlines():
 titles = get_headlines()
 last_got_titles = time.time()
 coins = ['BTC', 'ETH', 'LTC', 'DOGE']
-#coins = ['BTC']
+conv_mult = 1
+cur_sign = "£"
+if usd_mode:
+    conv_mult = GBP_USD_RATE
+    cur_sign = "$"
 cont = True
 while cont:
-    closes_all = {'BTC': 17227.63, # average buy prices
-                  'ETH': 1278,
-                  'LTC': 70.10,
-                  'DOGE': 0.06819}
-    held = {'BTC': 0.01201,
-            'ETH': 0.03747,
-            'LTC': 0.4624,
-            'DOGE': 320.91}
     gbp_held = {'BTC': 0,
             'ETH': 0,
             'LTC': 0,
@@ -140,7 +155,7 @@ while cont:
 
     # BTC
 
-    btc_usd_price = round(current_prices['BTC'] * 1.22,2)
+    btc_usd_price = round(current_prices['BTC'] * GBP_USD_RATE,2)
     btc_gbp_price = round(current_prices['BTC'],2)
     btc_increase = current_prices['BTC'] * held['BTC'] - prices_all_ago['BTC'] * held['BTC']
     btc_increase_percent = btc_increase / (prices_all_ago['BTC'] * held['BTC']) * 100
@@ -153,7 +168,7 @@ while cont:
     if btc_increase_percent < 0: btc_swing_sign = ""
     btc_swing_str = btc_swing_sign + str(round(btc_increase_percent,2)) + "%"
 
-    btc_held_str = "£" + str(round(held['BTC'] * current_prices['BTC'],2)) + " (" + btc_sign + "£" + str(round(btc_increase,2)) + ")"
+    btc_held_str = cur_sign + str(round(held['BTC'] * current_prices['BTC'] * conv_mult,2)) + " (" + btc_sign + cur_sign + str(round(btc_increase * conv_mult,2)) + ")"
     buf1 = " "*(19 - len(str(btc_gbp_str)))
     buf2 = " "*(21 - len(str(btc_usd_str)))
     buf3 = " "*(13 - len(str(btc_swing_str)))
@@ -165,7 +180,7 @@ while cont:
 
     # ETH
 
-    eth_usd_price = round(current_prices['ETH'] * 1.22,2)
+    eth_usd_price = round(current_prices['ETH'] * GBP_USD_RATE,2)
     eth_gbp_price = round(current_prices['ETH'],2)
     eth_increase = current_prices['ETH'] * held['ETH'] - prices_all_ago['ETH'] * held['ETH']
     eth_increase_percent = eth_increase / (prices_all_ago['ETH'] * held['ETH']) * 100
@@ -178,7 +193,7 @@ while cont:
     if eth_increase_percent < 0: eth_swing_sign = ""
     eth_swing_str = eth_swing_sign + str(round(eth_increase_percent,2)) + "%"
 
-    eth_held_str = "£" + str(round(held['ETH'] * current_prices['ETH'],2)) + " (" + eth_sign + "£" + str(round(eth_increase,2)) + ")"
+    eth_held_str = cur_sign + str(round(held['ETH'] * current_prices['ETH'] * conv_mult,2)) + " (" + eth_sign + cur_sign + str(round(eth_increase * conv_mult,2)) + ")"
     buf1 = " "*(19 - len(str(eth_gbp_str)))
     buf2 = " "*(21 - len(str(eth_usd_str)))
     buf3 = " "*(13 - len(str(eth_swing_str)))
@@ -189,7 +204,7 @@ while cont:
 
     # LTC
 
-    ltc_usd_price = round(current_prices['LTC'] * 1.22,2)
+    ltc_usd_price = round(current_prices['LTC'] * GBP_USD_RATE,2)
     ltc_gbp_price = round(current_prices['LTC'],2)
     ltc_increase = current_prices['LTC'] * held['LTC'] - prices_all_ago['LTC'] * held['LTC']
     ltc_increase_percent = ltc_increase / (prices_all_ago['LTC'] * held['LTC']) * 100
@@ -202,7 +217,7 @@ while cont:
     if ltc_increase_percent < 0: ltc_swing_sign = ""
     ltc_swing_str = ltc_swing_sign + str(round(ltc_increase_percent,2)) + "%"
 
-    ltc_held_str = "£" + str(round(held['LTC'] * current_prices['LTC'],2)) + " (" + ltc_sign + "£" + str(round(ltc_increase,2)) + ")"
+    ltc_held_str = cur_sign + str(round(held['LTC'] * current_prices['LTC'] * conv_mult,2)) + " (" + ltc_sign + cur_sign + str(round(ltc_increase * conv_mult,2)) + ")"
     buf1 = " "*(19 - len(str(ltc_gbp_str)))
     buf2 = " "*(21 - len(str(ltc_usd_str)))
     buf3 = " "*(13 - len(str(ltc_swing_str)))
@@ -213,7 +228,7 @@ while cont:
 
     # DOGE
 
-    doge_usd_price = round(current_prices['DOGE'] * 1.22,4)
+    doge_usd_price = round(current_prices['DOGE'] * GBP_USD_RATE,4)
     doge_gbp_price = round(current_prices['DOGE'],4)
     doge_increase = current_prices['DOGE'] * held['DOGE'] - prices_all_ago['DOGE'] * held['DOGE']
     doge_increase_percent = doge_increase / (prices_all_ago['DOGE'] * held['DOGE']) * 100
@@ -226,7 +241,7 @@ while cont:
     if doge_increase_percent < 0: doge_swing_sign = ""
     doge_swing_str = doge_swing_sign + str(round(doge_increase_percent,2)) + "%"
 
-    doge_held_str = "£" + str(round(held['DOGE'] * current_prices['DOGE'],2)) + " (" + doge_sign + "£" + str(round(doge_increase,2)) + ")"
+    doge_held_str = cur_sign + str(round(held['DOGE'] * current_prices['DOGE'] * conv_mult,2)) + " (" + doge_sign + cur_sign + str(round(doge_increase * conv_mult,2)) + ")"
     buf1 = " "*(19 - len(str(doge_gbp_str)))
     buf2 = " "*(21 - len(str(doge_usd_str)))
     buf3 = " "*(13 - len(str(doge_swing_str)))
@@ -239,19 +254,19 @@ while cont:
     colour = 'green'
     if increase_5min == 0: colour = 'white'
     elif increase_5min < 0: colour = 'red'
-    print(colored("5 min: " + sign_5min + "£{:.2f}".format(increase_5min) + " " + "(" + sign_percent_5min + "{:.2f}".format(increase_percent_5min) + "%)", colour))
+    print(colored("5 min: " + sign_5min + cur_sign + "{:.2f}".format(increase_5min * conv_mult) + " " + "(" + sign_percent_5min + "{:.2f}".format(increase_percent_5min) + "%)", colour))
     colour = 'green'
     if increase_1hr == 0: colour = 'white'
     elif increase_1hr < 0: colour = 'red'
-    print(colored("1 hr: " + sign_1hr + "£{:.2f}".format(increase_1hr) + " " + "(" + sign_percent_1hr + "{:.2f}".format(increase_percent_1hr) + "%)", colour))
+    print(colored("1 hr: " + sign_1hr + cur_sign + "{:.2f}".format(increase_1hr * conv_mult) + " " + "(" + sign_percent_1hr + "{:.2f}".format(increase_percent_1hr) + "%)", colour))
     colour = 'green'
     if increase_24hr == 0: colour = 'white'
     elif increase_24hr < 0: colour = 'red'
-    print(colored("24 hr: " + sign_24hr + "£{:.2f}".format(increase_24hr) + " " + "(" + sign_percent_24hr + "{:.2f}".format(increase_percent_24hr) + "%)", colour))
+    print(colored("24 hr: " + sign_24hr + cur_sign + "{:.2f}".format(increase_24hr * conv_mult) + " " + "(" + sign_percent_24hr + "{:.2f}".format(increase_percent_24hr) + "%)", colour))
     colour = 'green'
     if increase_all == 0: colour = 'white'
     elif increase_all < 0: colour = 'red'
-    print(colored("All: " + sign_all + "£{:.2f}".format(increase_all) + " " + "(" + sign_percent_all + "{:.2f}".format(increase_percent_all) + "%)", colour));
+    print(colored("All: " + sign_all + cur_sign + "{:.2f}".format(increase_all * conv_mult) + " " + "(" + sign_percent_all + "{:.2f}".format(increase_percent_all) + "%)", colour));
     print(colored("Total: £" + str(round(totheld_gbp,2)), colour))
     print("")
     headline = random.choice(titles)
